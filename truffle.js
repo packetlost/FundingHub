@@ -1,7 +1,7 @@
 module.exports = {
   build: "webpack",
   deploy: [
-    "dAgoraStore",
+    "FundingHub",
   ],
   rpc: {
     host: "localhost",
