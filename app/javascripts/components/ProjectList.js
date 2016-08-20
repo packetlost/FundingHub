@@ -10,7 +10,7 @@ const ProjectList = (props) => {
   const ProjectItems = props.projectList.map((project) => {
     console.log(project);
     return (
-      <ProjectItem key={project} project={props.project.at(project)} setProject={props.setProject} />
+      <ProjectItem key={project} project={props.Project.at(project)} setProject={props.setProject} />
     );
   });
 

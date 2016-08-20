@@ -18,6 +18,10 @@ contract FundingHub {
     throw;
   }
 
+  function getProjectCount() constant returns(uint count){
+    return activeProjects.length;
+  }
+
   /**
    * This function should allow a user to add a new project to the FundingHub. The function should deploy
    * a new Project contract and keep track of its address. The createProject function should accept all

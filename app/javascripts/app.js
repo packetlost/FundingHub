@@ -17,6 +17,7 @@ import Footer from './components/template/Footer';
 
 import RegisterProject from './components/RegisterProject';
 import ProjectList from './components/ProjectList';
+import ProjectSection from './components/ProjectSection';
 
 
 class App extends Component {
@@ -35,6 +36,7 @@ class App extends Component {
       contractBalance: web3.fromWei(web3.eth.getBalance(FundingHub.deployed().address), "ether").toFixed(5),
       isAdmin: false
     };
+    this.setProjectList();
   }
 
   render = () => {
@@ -48,7 +50,7 @@ class App extends Component {
           <RegisterProject fundingHub={this.state.fundingHub} setStatus={this.setStatus} />
         </div>);
     } else {
-      mainContent = <Project fundingHub={this.state.fundingHub} project={this.state.currentProject} />;
+      mainContent = <ProjectSection fundingHub={this.state.fundingHub} project={this.state.currentProject} />;
     }
 
     return (
@@ -63,12 +65,32 @@ class App extends Component {
     );
   }
 
+  setProjectList = () => {
+    var _this = this;
+    var _deployed = FundingHub.deployed();
+    _deployed.getProjectCount.call().then(function(result) {
+      var _projectList = [];
+      for(var i = 0; i < parseInt(result); i++) {
+        _projectList.push(_deployed.activeProjects.call(i));
+      }
+      return Promise.all(_projectList).then(function(projectArray) {
+        console.log(projectArray);
+        _this.setState({projectList: projectArray});
+      }).catch(function(e) {
+        console.error(e);
+      });
+    }).catch(function(e) {
+      console.error(e);
+    });
+  }
+
   setStatus = (message, type) => {
     this.setState({statusMessage: message, statusType: type});
   }
 
   setProject = (address) => {
-    this.setState({currentProjectAddress: address, currentProject: Project.at(address)});
+    console.log(address);
+    this.setState({currentProjectAddress: address.address, currentProject: address});
     console.log("State: " + this.state.currentProjectAddress);
   }
 }

@@ -6,8 +6,9 @@ class ProjectItem extends Component {
     super(props);
     this.state = {project: props.project, projectName: "", setProject: props.setProject};
     var _this = this;
-    this.state.project.name.call().then(function(result) {
-      _this.setState({projectName: result});
+    props.project.campaign.call().then(function(result) {
+      _this.setState({projectName: result[3]});
+      return null;
     }).catch(function(e) {
       console.error(e);
     });
@@ -24,7 +25,6 @@ class ProjectItem extends Component {
 
   handleClick = (event) => {
     event.preventDefault();
-    console.log(this.state.project);
     this.state.setProject(this.state.project);
   }
 }
