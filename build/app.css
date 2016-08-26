@@ -68,7 +68,7 @@ h3 {
 #cb_balance {font-weight: bold;}
 .contract_address, .contract_balance {font-size: 22px;}
 .progress {background: #292c2f;}
-.progress-bar {min-width: 2em;}
+.progress-bar {}
 #progressbar {margin-top: 20px;}
 .clearfix {clear:both;}
 
@@ -124,6 +124,11 @@ h1.shop-name {text-transform: capitalize;}
   border-right: 3px solid #808080;
   border-bottom: 3px solid transparent;
   border-top: 3px solid #808080;
+}
+
+.ribbon span.success {
+  background: #79A70A;
+  background: linear-gradient(#00aa00 0%, #79A70A 100%);
 }
 
 .tab-pane h1 {margin-top: 20px;}

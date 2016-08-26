@@ -7,7 +7,7 @@ import DateTime from "react-datetime";
 class RegisterProject extends Component {
   constructor(props) {
     super(props);
-    this.state = {fundingHub: props.fundingHub, setStatus: props.setStatus};
+    this.state = {fundingHub: props.fundingHub, setStatus: props.setStatus, setActiveProjectList:props.setActiveProjectList};
   }
 
   render = () => (
@@ -54,11 +54,17 @@ class RegisterProject extends Component {
 
   handleSubmit = (event) => {
     event.preventDefault();
+    this.state.setStatus('Registering Project...', 'warning');
+    var _this = this;
     var hub = this.state.fundingHub;
     //setStatus("Initiating transaction... (please wait)");
-    hub.createProject(web3.toWei(this.state.amount, "ether"), this.state.deadline, this.state.name.toLowerCase(), {from: web3.eth.defaultAccount, value: web3.toWei(1, "ether"), gas: 3000000}).then(function (tx_id) {
+    hub.createProject(web3.toWei(parseInt(this.state.amount), "ether"), this.state.deadline, this.state.name.toLowerCase(), {from: web3.eth.defaultAccount, gas: 3000000}).then(function (tx_id) {
       console.log(tx_id);
-      //setStatus("Product added successfully", "success");
+      return web3.eth.getTransactionReceiptMined(tx_id);
+    }).then(function(receipt) {
+      _this.state.setStatus('Project Created. TXID: ' + receipt.transactionHash, 'success');
+      _this.state.setActiveProjectList();
+      console.log(receipt);
     }).catch(function (e) {
       console.log(e);
       //setStatus("Error adding product: " + e.message, "danger");

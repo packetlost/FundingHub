@@ -1,58 +1,21 @@
-// TODO Create an automated test that covers the refund function in the Project contract using the truffle testing framework. 
-contract('Project', function(accounts) {
-  it("should put 10000 MetaCoin in the first account", function() {
-    var meta = MetaCoin.deployed();
-
-    return meta.getBalance.call(accounts[0]).then(function(balance) {
-      assert.equal(balance.valueOf(), 10000, "10000 wasn't in the first account");
-    });
-  });
-  it("should call a function that depends on a linked library  ", function(){
-    var meta = MetaCoin.deployed();
-    var metaCoinBalance;
-    var metaCoinEthBalance;
-
-    return meta.getBalance.call(accounts[0]).then(function(outCoinBalance){
-      metaCoinBalance = outCoinBalance.toNumber();
-      return meta.getBalanceInEth.call(accounts[0]);
-    }).then(function(outCoinBalanceEth){
-      metaCoinEthBalance = outCoinBalanceEth.toNumber();
-
-    }).then(function(){
-      assert.equal(metaCoinEthBalance,2*metaCoinBalance,"Library function returned unexpeced function, linkage may be broken");
-
-    });
-  });
-  it("should send coin correctly", function() {
-    var meta = MetaCoin.deployed();
-
-    // Get initial balances of first and second account.
-    var account_one = accounts[0];
-    var account_two = accounts[1];
-
-    var account_one_starting_balance;
-    var account_two_starting_balance;
-    var account_one_ending_balance;
-    var account_two_ending_balance;
-
-    var amount = 10;
-
-    return meta.getBalance.call(account_one).then(function(balance) {
-      account_one_starting_balance = balance.toNumber();
-      return meta.getBalance.call(account_two);
-    }).then(function(balance) {
-      account_two_starting_balance = balance.toNumber();
-      return meta.sendCoin(account_two, amount, {from: account_one});
-    }).then(function() {
-      return meta.getBalance.call(account_one);
-    }).then(function(balance) {
-      account_one_ending_balance = balance.toNumber();
-      return meta.getBalance.call(account_two);
-    }).then(function(balance) {
-      account_two_ending_balance = balance.toNumber();
-
-      assert.equal(account_one_ending_balance, account_one_starting_balance - amount, "Amount wasn't correctly taken from the sender");
-      assert.equal(account_two_ending_balance, account_two_starting_balance + amount, "Amount wasn't correctly sent to the receiver");
+contract('FundingHub', function(accounts) {
+  it("should refund an incomplete project", function() {
+    var hub = FundingHub.deployed();
+    return hub.createProject(20000000000000000000, parseInt(Math.floor(Date.now() / 1000) + 30), 'Test Campaign', {from: web3.eth.coinbase, gas: 3000000}).then(function(result) {
+      console.log(result);
+      var project = Project.at(result);
+      return hub.contribute(result, {from: web3.eth.coinbase, value: 5000000000000000000, gas: 3000000});
+    }).delay(30000).then(function(tx_id){
+      console.log(tx_id);
+      assert.equal(web3.getBalance(result), 5000000000000000000, "Funding was not successful");
+      return hub.contribute(result, {from: web3.eth.coinbase, value: 5000000000000000000, gas: 3000000});
+    }).then(function(tx_id2) {
+      console.log(tx_id2);
+      return project.refund();
+    }).then(function(refundResult){
+      assert.equal(web3.getBalance(result), 0, "Amount was not refunded");
+    }).catch(function(e){
+      console.error(e);
     });
   });
 });

@@ -4,7 +4,7 @@ import ProjectItem from './ProjectItem';
 const ProjectList = (props) => {
   //console.log(props.productList);
   if(props.projectList.length < 1) {
-    return <div><h2>No Projects</h2></div>
+    return <div><h3>No Projects</h3></div>
   }
 
   const ProjectItems = props.projectList.map((project) => {

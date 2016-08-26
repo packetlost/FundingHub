@@ -134,11 +134,23 @@
 	              'Decentralized Crowdfunding'
 	            )
 	          ),
-	          _react2.default.createElement(_ProjectList2.default, { projectList: _this2.state.projectList, Project: _ProjectSol2.default, setProject: _this2.setProject }),
-	          _react2.default.createElement(_RegisterProject2.default, { fundingHub: _this2.state.fundingHub, setStatus: _this2.setStatus })
+	          _react2.default.createElement(_RegisterProject2.default, { fundingHub: _this2.state.fundingHub, setStatus: _this2.setStatus, setActiveProjectList: _this2.setActiveProjectList }),
+	          _react2.default.createElement('br', { className: 'clearfix' }),
+	          _react2.default.createElement(
+	            'h2',
+	            null,
+	            'Active Projects'
+	          ),
+	          _react2.default.createElement(_ProjectList2.default, { projectList: _this2.state.activeProjectList, Project: _ProjectSol2.default, setProject: _this2.setProject }),
+	          _react2.default.createElement(
+	            'h2',
+	            null,
+	            'Finished Projects'
+	          ),
+	          _react2.default.createElement(_ProjectList2.default, { projectList: _this2.state.finishedProjectList, Project: _ProjectSol2.default, setProject: _this2.setProject })
 	        );
 	      } else {
-	        mainContent = _react2.default.createElement(_ProjectSection2.default, { fundingHub: _this2.state.fundingHub, project: _this2.state.currentProject });
+	        mainContent = _react2.default.createElement(_ProjectSection2.default, { fundingHub: _this2.state.fundingHub, project: _this2.state.currentProject, setStatus: _this2.setStatus });
 	      }
 
 	      return _react2.default.createElement(
@@ -155,17 +167,38 @@
 	      );
 	    };
 
-	    _this2.setProjectList = function () {
+	    _this2.setActiveProjectList = function () {
 	      var _this = _this2;
 	      var _deployed = _FundingHubSol2.default.deployed();
-	      _deployed.getProjectCount.call().then(function (result) {
+	      _deployed.getActiveProjectCount.call().then(function (result) {
+	        console.log(parseInt(result));
 	        var _projectList = [];
 	        for (var i = 0; i < parseInt(result); i++) {
 	          _projectList.push(_deployed.activeProjects.call(i));
 	        }
 	        return Promise.all(_projectList).then(function (projectArray) {
 	          console.log(projectArray);
-	          _this.setState({ projectList: projectArray });
+	          _this.setState({ activeProjectList: projectArray });
+	        }).catch(function (e) {
+	          console.error(e);
+	        });
+	      }).catch(function (e) {
+	        console.error(e);
+	      });
+	    };
+
+	    _this2.setFinishedProjectList = function () {
+	      var _this = _this2;
+	      var _deployed = _FundingHubSol2.default.deployed();
+	      _deployed.getFinishedProjectCount.call().then(function (result) {
+	        console.log(parseInt(result));
+	        var _projectList = [];
+	        for (var i = 0; i < parseInt(result); i++) {
+	          _projectList.push(_deployed.finishedProjects.call(i));
+	        }
+	        return Promise.all(_projectList).then(function (projectArray) {
+	          console.log(projectArray);
+	          _this.setState({ finishedProjectList: projectArray });
 	        }).catch(function (e) {
 	          console.error(e);
 	        });
@@ -188,7 +221,8 @@
 	      fundingHub: _FundingHubSol2.default.deployed(),
 	      currentProject: null,
 	      currentProjectAddress: null,
-	      projectList: [],
+	      activeProjectList: [],
+	      finishedProjectList: [],
 	      statusMessage: "",
 	      statusType: "",
 	      defaultAccount: _web3Helper2.default.eth.defaultAccount,
@@ -197,7 +231,8 @@
 	      contractBalance: _web3Helper2.default.fromWei(_web3Helper2.default.eth.getBalance(_FundingHubSol2.default.deployed().address), "ether").toFixed(5),
 	      isAdmin: false
 	    };
-	    _this2.setProjectList();
+	    _this2.setActiveProjectList();
+	    _this2.setFinishedProjectList();
 	    return _this2;
 	  }
 
@@ -66341,17 +66376,8 @@
 	        }],
 	        "name": "createProject",
 	        "outputs": [{
-	          "name": "success",
-	          "type": "bool"
-	        }],
-	        "type": "function"
-	      }, {
-	        "constant": true,
-	        "inputs": [],
-	        "name": "getProjectCount",
-	        "outputs": [{
-	          "name": "count",
-	          "type": "uint256"
+	          "name": "createdProject",
+	          "type": "address"
 	        }],
 	        "type": "function"
 	      }, {
@@ -66362,6 +66388,42 @@
 	        }],
 	        "name": "contribute",
 	        "outputs": [],
+	        "type": "function"
+	      }, {
+	        "constant": true,
+	        "inputs": [{
+	          "name": "",
+	          "type": "uint256"
+	        }],
+	        "name": "finishedProjects",
+	        "outputs": [{
+	          "name": "",
+	          "type": "address"
+	        }],
+	        "type": "function"
+	      }, {
+	        "constant": true,
+	        "inputs": [],
+	        "name": "getFinishedProjectCount",
+	        "outputs": [{
+	          "name": "count",
+	          "type": "uint256"
+	        }],
+	        "type": "function"
+	      }, {
+	        "constant": false,
+	        "inputs": [],
+	        "name": "deactiveProject",
+	        "outputs": [],
+	        "type": "function"
+	      }, {
+	        "constant": true,
+	        "inputs": [],
+	        "name": "getActiveProjectCount",
+	        "outputs": [{
+	          "name": "count",
+	          "type": "uint256"
+	        }],
 	        "type": "function"
 	      }, {
 	        "constant": true,
@@ -66388,10 +66450,10 @@
 	        "inputs": [],
 	        "type": "constructor"
 	      }],
-	      "unlinked_binary": "0x606060405260008054600160a060020a031916331790556108ae806100246000396000f36060604052361561004b5760e060020a600035046320f7a50581146100535780633bcff3b01461016b57806373e888fd14610178578063da367a6d146101ec578063f851a44014610232575b610244610002565b60806020604435600481810135601f8101849004909302840160405260608381526102469482359460248035956064949391019190819083828082843750949650505050505050600060008484846040516105fc806102b283390180848152602001838152602001806020018281038252838181518152602001915080519060200190808383829060006004602084601f0104600f02600301f150905090810190601f1680156101175780820380516001836020036101000a031916815260200191505b50945050505050604051809103906000f09050600160005080548060010182818154818355818115116102715781836000526020600020918201910161027191905b808211156102aa578981558401610159565b6001546060908152602090f35b6102446004357f2302440800000000000000000000000000000000000000000000000000000000606090815233600160a060020a03908116606452829190821690632302440890349060849060209060248185886185025a03f11561000257505060405151151591506102ae905057610002565b61025e60043560018054829081101561000257506000527fb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf60154600160a060020a031681565b61025e600054600160a060020a031681565b005b60405180821515815260200191505060405180910390f35b600160a060020a03166060908152602090f35b50505091909060005260206000209001600050805473ffffffffffffffffffffffffffffffffffffffff19168317905550509392505050565b5090565b50505660606040526040516105fc3803806105fc833981516080805160a0805160078054600160ff19909116811790915560e087016040523287890181815286890188905293880185905297820160c09097018790528054600160a060020a03191690971787556002858155600384905586516004805460008290529799959897949690947f8a35acfbc15ff81a39ae7d344fd709f28e8600b4aa8c65c6b64bfe7fe36bd19b6020610100838a1615026000190190921694909404601f90810191909104840194929392909101908390106100f957805160ff19168380011785555b506101299291505b80821115610150576000815584016100e6565b828001600101855582156100de579182015b828111156100de57825182600050559160200191906001019061010b565b505060008054600160a060020a0319163317905550505050506104a8806101546000396000f35b509056606060405236156100405760e060020a600035046322f3e2d481146100495780632302440814610055578063811e539c1461007b578063f9b8057f14610098575b6100aa5b610002565b6100ac60075460ff1681565b6100ac600435600080548190819033600160a060020a0390811691161461018557610002565b6001546002546003546100c092600160a060020a03169190600484565b610168600054600160a060020a031681565b005b604080519115158252519081900360200190f35b60408051600160a060020a0386168152602081018590529081018390526080606082018181528354600260018216156101000260001901909116049183018290529060a0830190849080156101565780601f1061012b57610100808354040283529160200191610156565b820191906000526020600020905b81548152906001019060200180831161013957829003601f168201915b50509550505050505060405180910390f35b60408051600160a060020a03929092168252519081900360200190f35b6000341161019257610002565b60075460ff1615156101a357610002565b60035430600160a060020a0316313401925042901180156101c5575060025482105b156101d45761020a8434610220565b6003544290101561029457604051600160a060020a03851690600090349082818181858883f1935050505015156102e857610002565b151560011461028857610002565b610350848234035b600160a060020a038216600090815260056020526040812080548381019091558082141561038b576006805460018101808355828183801582901161035e5781836000526020600020918201910161035e91905b8082111561039a5760008155600101610274565b600192505b5050919050565b6003544290108015906102a957506002548210155b1561004457506002548103600081111561021857604051600160a060020a03851690600090839082818181858883f19350505050151561021857610002565b60025430600160a060020a031631106103035761031a61032c565b61031a60035460009081904290106103de57610002565b151560011461034757610002565b61020a5b60025460009030600160a060020a0316311461039e57610002565b6000925061028d565b151560011461032857610002565b505050600092835250602090912001805473ffffffffffffffffffffffffffffffffffffffff1916851790555b5060019392505050565b600191505b5090565b6007805460ff19169055600154604051600160a060020a039182169160009130909116319082818181858883f1935050505015156103db57610002565b90565b506007805460ff1916905560005b600654811015610395576006805482908110156100025760008281527ff652222313e28459528d920b65115c16c04f3efc82aaedc97be59f3f377c0d3f91909101548254600160a060020a0391909116926005918391908690811015610002577ff652222313e28459528d920b65115c16c04f3efc82aaedc97be59f3f377c0d3f0154600160a060020a03169091525060205260408051908220549082818181858883f1935050505015156104a057610002565b6001016103ec56",
-	      "updated_at": 1471671947801,
+	      "unlinked_binary": "0x606060405260008054600160a060020a03191633179055610a3a806100246000396000f36060604052361561006c5760e060020a600035046320f7a505811461007457806373e888fd146101935780638ef2b90c146101de57806399e1171f14610224578063b1a577a41461022e578063b1af8dc314610329578063da367a6d14610334578063f851a44014610368575b61037a610002565b604080516020604435600481810135601f810184900484028501840190955284845261037c948135946024803595939460649492939101918190840183828082843750949650505050505050600060008484846040516105d88061044283390180848152602001838152602001806020018281038252838181518152602001915080519060200190808383829060006004602084601f0104600f02600301f150905090810190601f16801561013d5780820380516001836020036101000a031916815260200191505b50945050505050604051809103906000f09050600160005080548060010182818154818355818115116103ab578183600052602060002091820191016103ab91905b808211156103d2576000815560010161017f565b61037a600435600081905080600160a060020a031663b60d4288346040518260e060020a02815260040180905060206040518083038185886185025a03f11561000257505050505050565b61037c60043560028054829081101561000257506000527f405787fa12a823e0f2b7631cc41b3ba8828b3321ca811111fa75cd3aa3bb5ace0154600160a060020a031681565b6103996002545b90565b61037a60005b6001548110156103d65733600160a060020a0316600160005082815481101561000257600091909152600080516020610a1a8339815191520154600160a060020a031614156103de5760018054600019810190811015610002578154600080516020610a1a8339815191529190910154600160a060020a03169190839081101561000257600080516020610a1a833981519152018054600160a060020a031916929092179091556002805491820180825590919082818380158290116103e65760008390526103e6907f405787fa12a823e0f2b7631cc41b3ba8828b3321ca811111fa75cd3aa3bb5ace90810190830161017f565b61039960015461022b565b61037c6004356001805482908110156100025750600052600080516020610a1a8339815191520154600160a060020a031681565b61037c600054600160a060020a031681565b005b60408051600160a060020a03929092168252519081900360200190f35b60408051918252519081900360200190f35b5050506000928352506020909120018054600160a060020a03191682179055949350505050565b5090565b50565b505050505b600101610234565b5050506000928352506020909120018054600160a060020a031916331790556001805460001981018083559091908280158290116103d95760008390526103d990600080516020610a1a83398151915290810190830161017f560060606040526040516105d83803806105d8833981516080805160a0805160068054600160ff19909116811762ffff00191690915560e087016040523287890181815286890188905293880185905297820160c09097018790528054600160a060020a03191690971787556002858155600384905586516004805460008290529799959897949690947f8a35acfbc15ff81a39ae7d344fd709f28e8600b4aa8c65c6b64bfe7fe36bd19b6020610100838a1615026000190190921694909404601f90810191909104840194929392909101908390106100ff57805160ff19168380011785555b5061012f9291505b80821115610156576000815584016100ec565b828001600101855582156100e4579182015b828111156100e4578251826000505591602001919060010190610111565b505060008054600160a060020a03191633179055505050505061047e8061015a6000396000f35b509056606060405236156100825760e060020a600035046302fb0c5e811461008a578063365a86fc146100965780633b6c5143146100a857806342e94c90146100b6578063590e1ae3146100ce57806363bd1d4a146100e5578063811e539c146101075780639a9e3fd814610122578063b60d428814610134578063bf89662d14610155575b610000610002565b61016760065460ff1681565b61017b600054600160a060020a031681565b61016760065460ff16155b90565b61017b60043560056020526000908152604090205481565b610167600354600090819042901061021f57610002565b610167600154600090600160a060020a03908116339091161461028a57610002565b610185600354600254600154600160a060020a031691600484565b61016760065462010000900460ff1681565b61016760008054819033600160a060020a039081169116146102ee57610002565b61016760065460ff6101009091041681565b604080519115158252519081900360200190f35b6060908152602090f35b6060848152608084815260a084905260c0908152825460026001821615610100908102600019019092160460e0819052849080156102045780601f106101d957610100808354040283529160200191610204565b820191906000526020600020905b8154815290600101906020018083116101e757829003601f168201915b50509550505050505060405180910390f35b600191505b5090565b32600160a060020a0316815260056020526040812054600190101561024357610002565b600654610100900460ff16151561025957610002565b506040812080549082905532600160a060020a03168282606082818181858883f19350505050151561021657610002565b60025430600160a060020a03163110156102a357610002565b60065462010000900460ff1615156102ba57610002565b600254600154600160a060020a0316908290606082818181858883f1935050505015156102e657610002565b5060016100b3565b348190116102fb57610002565b60065460ff16151561030c57610002565b6003544290118015610329575060025430600160a060020a031631105b1561034f5732600160a060020a031681526005602052604081203490556001915061021b565b60068054825460ff199091169091557fb1a577a4000000000000000000000000000000000000000000000000000000006060908152600160a060020a039091169063b1a577a490606490849060048183876161da5a03f115610002575050600354429011905080156103cd575060025430600160a060020a03163110155b1561044557506006805462ff000019166201000017905560025432600160a060020a039081168352600560205260408320805430909216319290920334819003909101909155818111156102165760405132600160a060020a0316908390839082818181858883f19350505050151561021657610002565b6006805461ff00191661010017905560405132600160a060020a0316908290349082818181858883f1935050505015156102165761000256b10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf6",
+	      "updated_at": 1472170943309,
 	      "links": {},
-	      "address": "0x56f2071d75914a7f969cd95053e6f75114d00e60"
+	      "address": "0xc745073b374aacb1fe4a5b67feea0b0d67015d46"
 	    }
 	  };
 
@@ -66837,19 +66899,55 @@
 	      "abi": [{
 	        "constant": true,
 	        "inputs": [],
-	        "name": "isActive",
+	        "name": "active",
 	        "outputs": [{
 	          "name": "",
 	          "type": "bool"
 	        }],
 	        "type": "function"
 	      }, {
-	        "constant": false,
-	        "inputs": [{
-	          "name": "_funder",
+	        "constant": true,
+	        "inputs": [],
+	        "name": "hub",
+	        "outputs": [{
+	          "name": "",
 	          "type": "address"
 	        }],
-	        "name": "fund",
+	        "type": "function"
+	      }, {
+	        "constant": true,
+	        "inputs": [],
+	        "name": "checkFinished",
+	        "outputs": [{
+	          "name": "isFinished",
+	          "type": "bool"
+	        }],
+	        "type": "function"
+	      }, {
+	        "constant": true,
+	        "inputs": [{
+	          "name": "",
+	          "type": "address"
+	        }],
+	        "name": "contributions",
+	        "outputs": [{
+	          "name": "",
+	          "type": "uint256"
+	        }],
+	        "type": "function"
+	      }, {
+	        "constant": false,
+	        "inputs": [],
+	        "name": "refund",
+	        "outputs": [{
+	          "name": "success",
+	          "type": "bool"
+	        }],
+	        "type": "function"
+	      }, {
+	        "constant": false,
+	        "inputs": [],
+	        "name": "payout",
 	        "outputs": [{
 	          "name": "success",
 	          "type": "bool"
@@ -66876,10 +66974,28 @@
 	      }, {
 	        "constant": true,
 	        "inputs": [],
-	        "name": "fundingHub",
+	        "name": "successful",
 	        "outputs": [{
 	          "name": "",
-	          "type": "address"
+	          "type": "bool"
+	        }],
+	        "type": "function"
+	      }, {
+	        "constant": false,
+	        "inputs": [],
+	        "name": "fund",
+	        "outputs": [{
+	          "name": "isFunded",
+	          "type": "bool"
+	        }],
+	        "type": "function"
+	      }, {
+	        "constant": true,
+	        "inputs": [],
+	        "name": "refundable",
+	        "outputs": [{
+	          "name": "",
+	          "type": "bool"
 	        }],
 	        "type": "function"
 	      }, {
@@ -66895,8 +67011,8 @@
 	        }],
 	        "type": "constructor"
 	      }],
-	      "unlinked_binary": "0x60606040526040516105fc3803806105fc833981516080805160a0805160078054600160ff19909116811790915560e087016040523287890181815286890188905293880185905297820160c09097018790528054600160a060020a03191690971787556002858155600384905586516004805460008290529799959897949690947f8a35acfbc15ff81a39ae7d344fd709f28e8600b4aa8c65c6b64bfe7fe36bd19b6020610100838a1615026000190190921694909404601f90810191909104840194929392909101908390106100f957805160ff19168380011785555b506101299291505b80821115610150576000815584016100e6565b828001600101855582156100de579182015b828111156100de57825182600050559160200191906001019061010b565b505060008054600160a060020a0319163317905550505050506104a8806101546000396000f35b509056606060405236156100405760e060020a600035046322f3e2d481146100495780632302440814610055578063811e539c1461007b578063f9b8057f14610098575b6100aa5b610002565b6100ac60075460ff1681565b6100ac600435600080548190819033600160a060020a0390811691161461018557610002565b6001546002546003546100c092600160a060020a03169190600484565b610168600054600160a060020a031681565b005b604080519115158252519081900360200190f35b60408051600160a060020a0386168152602081018590529081018390526080606082018181528354600260018216156101000260001901909116049183018290529060a0830190849080156101565780601f1061012b57610100808354040283529160200191610156565b820191906000526020600020905b81548152906001019060200180831161013957829003601f168201915b50509550505050505060405180910390f35b60408051600160a060020a03929092168252519081900360200190f35b6000341161019257610002565b60075460ff1615156101a357610002565b60035430600160a060020a0316313401925042901180156101c5575060025482105b156101d45761020a8434610220565b6003544290101561029457604051600160a060020a03851690600090349082818181858883f1935050505015156102e857610002565b151560011461028857610002565b610350848234035b600160a060020a038216600090815260056020526040812080548381019091558082141561038b576006805460018101808355828183801582901161035e5781836000526020600020918201910161035e91905b8082111561039a5760008155600101610274565b600192505b5050919050565b6003544290108015906102a957506002548210155b1561004457506002548103600081111561021857604051600160a060020a03851690600090839082818181858883f19350505050151561021857610002565b60025430600160a060020a031631106103035761031a61032c565b61031a60035460009081904290106103de57610002565b151560011461034757610002565b61020a5b60025460009030600160a060020a0316311461039e57610002565b6000925061028d565b151560011461032857610002565b505050600092835250602090912001805473ffffffffffffffffffffffffffffffffffffffff1916851790555b5060019392505050565b600191505b5090565b6007805460ff19169055600154604051600160a060020a039182169160009130909116319082818181858883f1935050505015156103db57610002565b90565b506007805460ff1916905560005b600654811015610395576006805482908110156100025760008281527ff652222313e28459528d920b65115c16c04f3efc82aaedc97be59f3f377c0d3f91909101548254600160a060020a0391909116926005918391908690811015610002577ff652222313e28459528d920b65115c16c04f3efc82aaedc97be59f3f377c0d3f0154600160a060020a03169091525060205260408051908220549082818181858883f1935050505015156104a057610002565b6001016103ec56",
-	      "updated_at": 1471671947804,
+	      "unlinked_binary": "0x60606040526040516105d83803806105d8833981516080805160a0805160068054600160ff19909116811762ffff00191690915560e087016040523287890181815286890188905293880185905297820160c09097018790528054600160a060020a03191690971787556002858155600384905586516004805460008290529799959897949690947f8a35acfbc15ff81a39ae7d344fd709f28e8600b4aa8c65c6b64bfe7fe36bd19b6020610100838a1615026000190190921694909404601f90810191909104840194929392909101908390106100ff57805160ff19168380011785555b5061012f9291505b80821115610156576000815584016100ec565b828001600101855582156100e4579182015b828111156100e4578251826000505591602001919060010190610111565b505060008054600160a060020a03191633179055505050505061047e8061015a6000396000f35b509056606060405236156100825760e060020a600035046302fb0c5e811461008a578063365a86fc146100965780633b6c5143146100a857806342e94c90146100b6578063590e1ae3146100ce57806363bd1d4a146100e5578063811e539c146101075780639a9e3fd814610122578063b60d428814610134578063bf89662d14610155575b610000610002565b61016760065460ff1681565b61017b600054600160a060020a031681565b61016760065460ff16155b90565b61017b60043560056020526000908152604090205481565b610167600354600090819042901061021f57610002565b610167600154600090600160a060020a03908116339091161461028a57610002565b610185600354600254600154600160a060020a031691600484565b61016760065462010000900460ff1681565b61016760008054819033600160a060020a039081169116146102ee57610002565b61016760065460ff6101009091041681565b604080519115158252519081900360200190f35b6060908152602090f35b6060848152608084815260a084905260c0908152825460026001821615610100908102600019019092160460e0819052849080156102045780601f106101d957610100808354040283529160200191610204565b820191906000526020600020905b8154815290600101906020018083116101e757829003601f168201915b50509550505050505060405180910390f35b600191505b5090565b32600160a060020a0316815260056020526040812054600190101561024357610002565b600654610100900460ff16151561025957610002565b506040812080549082905532600160a060020a03168282606082818181858883f19350505050151561021657610002565b60025430600160a060020a03163110156102a357610002565b60065462010000900460ff1615156102ba57610002565b600254600154600160a060020a0316908290606082818181858883f1935050505015156102e657610002565b5060016100b3565b348190116102fb57610002565b60065460ff16151561030c57610002565b6003544290118015610329575060025430600160a060020a031631105b1561034f5732600160a060020a031681526005602052604081203490556001915061021b565b60068054825460ff199091169091557fb1a577a4000000000000000000000000000000000000000000000000000000006060908152600160a060020a039091169063b1a577a490606490849060048183876161da5a03f115610002575050600354429011905080156103cd575060025430600160a060020a03163110155b1561044557506006805462ff000019166201000017905560025432600160a060020a039081168352600560205260408320805430909216319290920334819003909101909155818111156102165760405132600160a060020a0316908390839082818181858883f19350505050151561021657610002565b6006805461ff00191661010017905560405132600160a060020a0316908290349082818181858883f1935050505015156102165761000256",
+	      "updated_at": 1472170943326,
 	      "links": {}
 	    }
 	  };
@@ -67092,6 +67208,11 @@
 	  return _react2.default.createElement(
 	    "div",
 	    { id: "status", className: "alert alert-" + props.statusType },
+	    _react2.default.createElement(
+	      "a",
+	      { href: "#", className: "close", "data-dismiss": "alert", "aria-label": "close" },
+	      "×"
+	    ),
 	    props.statusMessage
 	  );
 	};
@@ -67226,9 +67347,9 @@
 	  function RegisterProject(props) {
 	    _classCallCheck(this, RegisterProject);
 
-	    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(RegisterProject).call(this, props));
+	    var _this2 = _possibleConstructorReturn(this, Object.getPrototypeOf(RegisterProject).call(this, props));
 
-	    _this.render = function () {
+	    _this2.render = function () {
 	      return _react2.default.createElement(
 	        'div',
 	        null,
@@ -67240,7 +67361,7 @@
 	            { className: 'text-center' },
 	            'Register Project'
 	          ),
-	          _react2.default.createElement(_status2.default, { statusMessage: _this.state.statusMessage, statusType: _this.state.statusType }),
+	          _react2.default.createElement(_status2.default, { statusMessage: _this2.state.statusMessage, statusType: _this2.state.statusType }),
 	          _react2.default.createElement(
 	            'div',
 	            { className: 'form-group col-md-12' },
@@ -67249,7 +67370,7 @@
 	              null,
 	              'Name'
 	            ),
-	            _react2.default.createElement('input', { type: 'text', className: 'form-control', name: 'name', id: 'name', placeholder: 'Project Name', onChange: _this.bindState('name') })
+	            _react2.default.createElement('input', { type: 'text', className: 'form-control', name: 'name', id: 'name', placeholder: 'Project Name', onChange: _this2.bindState('name') })
 	          ),
 	          _react2.default.createElement(
 	            'div',
@@ -67267,7 +67388,7 @@
 	                { className: 'input-group-addon' },
 	                'Ξ'
 	              ),
-	              _react2.default.createElement('input', { type: 'text', className: 'form-control', id: 'amount', name: 'amount', placeholder: 'Target Amount (Ether)', onChange: _this.bindState('amount') })
+	              _react2.default.createElement('input', { type: 'text', className: 'form-control', id: 'amount', name: 'amount', placeholder: 'Target Amount (Ether)', onChange: _this2.bindState('amount') })
 	            )
 	          ),
 	          _react2.default.createElement(
@@ -67286,7 +67407,7 @@
 	                { className: 'input-group-addon' },
 	                _react2.default.createElement('i', { className: 'fa fa-calendar' })
 	              ),
-	              _react2.default.createElement(_reactDatetime2.default, { id: 'deadline', onChange: _this.bindDate(), placeholder: 'Deadline' })
+	              _react2.default.createElement(_reactDatetime2.default, { id: 'deadline', onChange: _this2.bindDate(), placeholder: 'Deadline' })
 	            )
 	          ),
 	          _react2.default.createElement(
@@ -67295,7 +67416,7 @@
 	            _react2.default.createElement(
 	              'button',
 	              { type: 'button', id: 'RegisterProjectFormButton', className: 'btn btn-primary', onClick: function onClick(event) {
-	                  return _this.handleSubmit(event);
+	                  return _this2.handleSubmit(event);
 	                } },
 	              'Create Project'
 	            )
@@ -67304,33 +67425,39 @@
 	      );
 	    };
 
-	    _this.bindState = function (property) {
+	    _this2.bindState = function (property) {
 	      return function (event) {
-	        _this.setState(_defineProperty({}, property, event.target.value));
+	        _this2.setState(_defineProperty({}, property, event.target.value));
 	      };
 	    };
 
-	    _this.bindDate = function () {
+	    _this2.bindDate = function () {
 	      return function (event) {
-	        _this.setState({ deadline: event.unix() });
+	        _this2.setState({ deadline: event.unix() });
 	      };
 	    };
 
-	    _this.handleSubmit = function (event) {
+	    _this2.handleSubmit = function (event) {
 	      event.preventDefault();
-	      var hub = _this.state.fundingHub;
+	      _this2.state.setStatus('Registering Project...', 'warning');
+	      var _this = _this2;
+	      var hub = _this2.state.fundingHub;
 	      //setStatus("Initiating transaction... (please wait)");
-	      hub.createProject(_web3Helper2.default.toWei(_this.state.amount, "ether"), _this.state.deadline, _this.state.name.toLowerCase(), { from: _web3Helper2.default.eth.defaultAccount, value: _web3Helper2.default.toWei(1, "ether"), gas: 3000000 }).then(function (tx_id) {
+	      hub.createProject(_web3Helper2.default.toWei(parseInt(_this2.state.amount), "ether"), _this2.state.deadline, _this2.state.name.toLowerCase(), { from: _web3Helper2.default.eth.defaultAccount, gas: 3000000 }).then(function (tx_id) {
 	        console.log(tx_id);
-	        //setStatus("Product added successfully", "success");
+	        return _web3Helper2.default.eth.getTransactionReceiptMined(tx_id);
+	      }).then(function (receipt) {
+	        _this.state.setStatus('Project Created. TXID: ' + receipt.transactionHash, 'success');
+	        _this.state.setActiveProjectList();
+	        console.log(receipt);
 	      }).catch(function (e) {
 	        console.log(e);
 	        //setStatus("Error adding product: " + e.message, "danger");
 	      });
 	    };
 
-	    _this.state = { fundingHub: props.fundingHub, setStatus: props.setStatus };
-	    return _this;
+	    _this2.state = { fundingHub: props.fundingHub, setStatus: props.setStatus, setActiveProjectList: props.setActiveProjectList };
+	    return _this2;
 	  }
 
 	  return RegisterProject;
@@ -82445,7 +82572,7 @@
 	      'div',
 	      null,
 	      _react2.default.createElement(
-	        'h2',
+	        'h3',
 	        null,
 	        'No Projects'
 	      )
@@ -82540,6 +82667,9 @@
 	    }).catch(function (e) {
 	      console.error(e);
 	    });
+	    props.project.active.call().then(function (result) {
+	      console.log(result);
+	    });
 	    return _this2;
 	  }
 
@@ -82590,137 +82720,288 @@
 
 	    var _this2 = _possibleConstructorReturn(this, Object.getPrototypeOf(ProjectSection).call(this, props));
 
-	    _this2.render = function () {
-	      return _react2.default.createElement(
-	        'div',
-	        { className: 'col-md-12 text-center' },
-	        _react2.default.createElement(
-	          'h2',
-	          null,
-	          _this2.state.title
-	        ),
-	        _react2.default.createElement(
-	          'div',
-	          { className: 'well project project-home' },
-	          _react2.default.createElement(
-	            'div',
-	            { className: 'ribbon' },
-	            _react2.default.createElement(
-	              'span',
-	              null,
-	              _moment2.default.duration(_this2.state.deadline - (0, _moment2.default)().unix(), "seconds").humanize(true)
-	            )
-	          ),
-	          _react2.default.createElement(
-	            'div',
-	            { className: 'col-md-12' },
-	            _react2.default.createElement(
-	              'form',
-	              { className: 'form-contribute' },
-	              _react2.default.createElement(
-	                'div',
-	                { className: 'form-group col-md-5 col-md-offset-2' },
-	                _react2.default.createElement(
-	                  'div',
-	                  { className: 'input-group' },
-	                  _react2.default.createElement(
-	                    'div',
-	                    { className: 'input-group-addon' },
-	                    'Ξ'
-	                  ),
-	                  _react2.default.createElement('input', { type: 'text', className: 'form-control', id: 'amount', name: 'amount', placeholder: 'Amount (Ether)', onChange: _this2.bindState('amount') })
-	                )
-	              ),
-	              _react2.default.createElement(
-	                'div',
-	                { className: 'col-md-3' },
-	                _react2.default.createElement(
-	                  'button',
-	                  { type: 'button', className: 'btn btn-primary', onClick: function onClick(event) {
-	                      return _this2.handlePurchase(event);
-	                    } },
-	                  'Contribute'
-	                )
-	              )
-	            ),
-	            _react2.default.createElement('br', { className: 'clearfix' }),
-	            _react2.default.createElement(
-	              'div',
-	              { className: 'col-md-12', id: 'progressbar' },
-	              _react2.default.createElement(_reactBootstrap.ProgressBar, { now: _this2.state.total / _this2.state.target * 100, label: _this2.state.total / _this2.state.target * 100 + '%' })
-	            ),
-	            _react2.default.createElement(
-	              'div',
-	              { className: 'text-right pull-right' },
-	              _react2.default.createElement(
-	                'h5',
-	                null,
-	                _react2.default.createElement(
-	                  'b',
-	                  null,
-	                  'Goal: '
-	                ),
-	                _web3Helper2.default.fromWei(parseInt(_this2.state.target), "ether"),
-	                ' ETH'
-	              )
-	            ),
-	            _react2.default.createElement(
-	              'div',
-	              { className: 'text-left pull-left' },
-	              _react2.default.createElement(
-	                'h5',
-	                null,
-	                _react2.default.createElement(
-	                  'b',
-	                  null,
-	                  'Funded: '
-	                ),
-	                _web3Helper2.default.fromWei(parseInt(_this2.state.total), "ether"),
-	                ' ETH'
-	              )
-	            )
-	          ),
-	          _react2.default.createElement('br', { className: 'clearfix' })
-	        )
-	      );
-	    };
+	    _initialiseProps.call(_this2);
 
-	    _this2.bindState = function (property) {
-	      return function (event) {
-	        _this2.setState(_defineProperty({}, property, event.target.value));
-	      };
-	    };
-
-	    _this2.handlePurchase = function (event) {
-	      event.preventDefault();
-	      var hub = _this2.state.fundingHub;
-	      var _project = _this2.state.project;
-	      console.log(_web3Helper2.default.toWei(parseFloat(_this2.state.amount), "ether"));
-
-	      hub.contribute(_this2.state.project.address, { from: _web3Helper2.default.eth.defaultAccount, gas: 3000000, value: _web3Helper2.default.toWei(parseFloat(_this2.state.amount), "ether") }).then(function (tx_id) {
-	        console.log(tx_id);
-	        return _web3Helper2.default.eth.getTransactionReceiptMined(tx_id);
-	      }).then(function (receipt) {
-	        console.log(receipt);
-	        // TODO Refresh Balance
-	      }).catch(function (e) {
-	        console.log(e);
-	      });
-	    };
-
-	    _this2.state = { fundingHub: props.fundingHub, project: props.project, total: parseInt(_web3Helper2.default.eth.getBalance(props.project.address)) };
+	    _this2.state = { setStatus: props.setStatus, fundingHub: props.fundingHub, project: props.project, total: parseInt(_web3Helper2.default.eth.getBalance(props.project.address)) };
 	    var _this = _this2;
 	    props.project.campaign.call().then(function (result) {
-	      _this.setState({ title: result[3], target: parseInt(result[1]), deadline: parseInt(result[2]) });
-	      console.log(parseInt(result[2]));
+	      var progress = Math.round(parseFloat(_this.state.total / parseInt(result[1])) * 10000) / 100;
+	      console.log(progress);
+	      _this.setState({ title: result[3], target: parseInt(result[1]), deadline: parseInt(result[2]), progress: progress });
+	      return _this.state.project.successful.call();
+	    }).then(function (success) {
+	      console.log("successful: " + success);
+	      if (success == true) _this.setState({ progress: 100 });
 	    }).catch(function (e) {
 	      console.error(e);
+	    });
+	    props.project.refundable.call().then(function (result) {
+	      if (result == true) _this.setState({ refundable: true });
+	    });
+
+	    props.project.active.call().then(function (result) {
+	      console.log("Active:" + result);
+	    });
+	    props.project.refundable.call().then(function (result) {
+	      console.log("Refundable: " + result);
+	    });
+	    props.project.contributions.call("0x7806651b958d79e475f5a26536c67d5f20cc7141").then(function (result) {
+	      console.log("Contributions: " + parseInt(result));
+	    });
+	    props.project.campaign.call().then(function (result) {
+	      console.log("Campaign Owner: " + result[0]);
 	    });
 	    return _this2;
 	  }
 
 	  return ProjectSection;
 	}(_react.Component);
+
+	var _initialiseProps = function _initialiseProps() {
+	  var _this3 = this;
+
+	  this.render = function () {
+	    var ribbon;var content;
+	    if (_this3.state.progress == 100 && _web3Helper2.default.eth.getBalance(_this3.state.project.address) > 0) {
+	      ribbon = _react2.default.createElement(
+	        'div',
+	        { className: 'ribbon' },
+	        _react2.default.createElement(
+	          'span',
+	          { className: 'success' },
+	          'FUNDED'
+	        )
+	      );
+	      content = _react2.default.createElement(
+	        'div',
+	        null,
+	        _react2.default.createElement(
+	          'h3',
+	          null,
+	          'Project Funded Successfully!'
+	        ),
+	        _react2.default.createElement(
+	          'div',
+	          { className: 'col-md-12', id: 'progressbar' },
+	          _react2.default.createElement(_reactBootstrap.ProgressBar, { now: 100, label: '100%', bsStyle: 'success' })
+	        ),
+	        _react2.default.createElement(
+	          'button',
+	          { type: 'button', className: 'btn btn-success', onClick: function onClick(event) {
+	              return _this3.handlePayout(event);
+	            } },
+	          'Payout'
+	        )
+	      );
+	    } else if (_this3.state.progress == 100) {
+	      ribbon = _react2.default.createElement(
+	        'div',
+	        { className: 'ribbon' },
+	        _react2.default.createElement(
+	          'span',
+	          { className: 'success' },
+	          'FUNDED'
+	        )
+	      );
+	      content = _react2.default.createElement(
+	        'div',
+	        null,
+	        _react2.default.createElement(
+	          'h3',
+	          null,
+	          'Project Funded Successfully!'
+	        ),
+	        _react2.default.createElement(
+	          'div',
+	          { className: 'col-md-12', id: 'progressbar' },
+	          _react2.default.createElement(_reactBootstrap.ProgressBar, { now: 100, label: '100%', bsStyle: 'success' })
+	        )
+	      );
+	    } else if (_this3.state.refundable == true) {
+	      ribbon = _react2.default.createElement(
+	        'div',
+	        { className: 'ribbon' },
+	        _react2.default.createElement(
+	          'span',
+	          null,
+	          'UNFUNDED'
+	        )
+	      );
+	      content = _react2.default.createElement(
+	        'div',
+	        null,
+	        _react2.default.createElement(
+	          'h3',
+	          null,
+	          'Project Not Funded'
+	        ),
+	        _react2.default.createElement(
+	          'button',
+	          { type: 'button', className: 'btn btn-danger', onClick: function onClick(event) {
+	              return _this3.handleRefund(event);
+	            } },
+	          'Refund Me'
+	        )
+	      );
+	    } else {
+	      ribbon = _react2.default.createElement(
+	        'div',
+	        { className: 'ribbon' },
+	        _react2.default.createElement(
+	          'span',
+	          null,
+	          _moment2.default.duration(_this3.state.deadline - (0, _moment2.default)().unix(), "seconds").humanize(true)
+	        )
+	      );
+	      content = _react2.default.createElement(
+	        'div',
+	        null,
+	        _react2.default.createElement(
+	          'form',
+	          { className: 'form-contribute' },
+	          _react2.default.createElement(
+	            'div',
+	            { className: 'form-group col-md-5 col-md-offset-2' },
+	            _react2.default.createElement(
+	              'div',
+	              { className: 'input-group' },
+	              _react2.default.createElement(
+	                'div',
+	                { className: 'input-group-addon' },
+	                'Ξ'
+	              ),
+	              _react2.default.createElement('input', { type: 'text', className: 'form-control', id: 'amount', name: 'amount', placeholder: 'Amount (Ether)', onChange: _this3.bindState('amount') })
+	            )
+	          ),
+	          _react2.default.createElement(
+	            'div',
+	            { className: 'col-md-3' },
+	            _react2.default.createElement(
+	              'button',
+	              { type: 'button', className: 'btn btn-primary', onClick: function onClick(event) {
+	                  return _this3.handlePurchase(event);
+	                } },
+	              'Contribute'
+	            )
+	          )
+	        ),
+	        _react2.default.createElement('br', { className: 'clearfix' }),
+	        _react2.default.createElement(
+	          'div',
+	          { className: 'col-md-12', id: 'progressbar' },
+	          _react2.default.createElement(_reactBootstrap.ProgressBar, { now: _this3.state.progress, label: _this3.state.progress + '%', bsStyle: 'success' })
+	        ),
+	        _react2.default.createElement(
+	          'div',
+	          { className: 'text-right pull-right' },
+	          _react2.default.createElement(
+	            'h5',
+	            null,
+	            _react2.default.createElement(
+	              'b',
+	              null,
+	              'Goal: '
+	            ),
+	            _web3Helper2.default.fromWei(parseInt(_this3.state.target), "ether"),
+	            ' ETH'
+	          )
+	        ),
+	        _react2.default.createElement(
+	          'div',
+	          { className: 'text-left pull-left' },
+	          _react2.default.createElement(
+	            'h5',
+	            null,
+	            _react2.default.createElement(
+	              'b',
+	              null,
+	              'Funded: '
+	            ),
+	            _web3Helper2.default.fromWei(parseInt(_this3.state.total), "ether"),
+	            ' ETH'
+	          )
+	        )
+	      );
+	    }
+
+	    return _react2.default.createElement(
+	      'div',
+	      { className: 'col-md-12 text-center' },
+	      _react2.default.createElement(
+	        'h2',
+	        null,
+	        _this3.state.title
+	      ),
+	      _react2.default.createElement(
+	        'div',
+	        { className: 'well project project-home' },
+	        ribbon,
+	        _react2.default.createElement(
+	          'div',
+	          { className: 'col-md-12' },
+	          content
+	        ),
+	        _react2.default.createElement('br', { className: 'clearfix' })
+	      )
+	    );
+	  };
+
+	  this.bindState = function (property) {
+	    return function (event) {
+	      _this3.setState(_defineProperty({}, property, event.target.value));
+	    };
+	  };
+
+	  this.handlePurchase = function (event) {
+	    event.preventDefault();
+	    _this3.state.setStatus('Sending Contribution...', 'warning');
+	    var _this = _this3;
+	    var hub = _this3.state.fundingHub;
+	    var _project = _this3.state.project;
+	    console.log(_web3Helper2.default.toWei(parseFloat(_this3.state.amount), "ether"));
+	    hub.contribute(_this3.state.project.address, { from: _web3Helper2.default.eth.defaultAccount, gas: 3000000, value: _web3Helper2.default.toWei(parseFloat(_this3.state.amount), "ether") }).then(function (tx_id) {
+	      console.log(tx_id);
+	      return _web3Helper2.default.eth.getTransactionReceiptMined(tx_id);
+	    }).then(function (receipt) {
+	      console.log(receipt);
+	      _this.state.setStatus('Contribution sent. TXID: ' + receipt.transactionHash, 'success');
+	    }).catch(function (e) {
+	      console.log(e);
+	    });
+	  };
+
+	  this.handlePayout = function (event) {
+	    event.preventDefault();
+	    _this3.state.setStatus('Paying out...', 'warning');
+	    var _project = _this3.state.project;
+	    var _this = _this3;
+	    _project.payout({ from: _web3Helper2.default.eth.defaultAccount, gas: 3000000 }).then(function (tx_id) {
+	      return _web3Helper2.default.eth.getTransactionReceiptMined(tx_id);
+	    }).then(function (receipt) {
+	      _this.state.setStatus('Payout sent. TXID: ' + receipt.transactionHash, 'success');
+	      console.log(receipt);
+	    }).catch(function (e) {
+	      console.error(e);
+	      _this.state.setStatus('Could not send payout.', 'danger');
+	    });
+	  };
+
+	  this.handleRefund = function (event) {
+	    event.preventDefault();
+	    var _this = _this3;
+	    _this3.state.setStatus('Refunding...', 'warning');
+	    var _project = _this3.state.project;
+	    _project.refund({ from: _web3Helper2.default.eth.defaultAccount, gas: 3000000 }).then(function (tx_id) {
+	      return _web3Helper2.default.eth.getTransactionReceiptMined(tx_id);
+	    }).then(function (receipt) {
+	      _this.state.setStatus('Refund sent. TXID: ' + receipt.transactionHash, 'success');
+	      console.log(receipt);
+	    }).catch(function (e) {
+	      console.error(e);
+	      _this.state.setStatus('Could not send refund.', 'danger');
+	    });
+	  };
+	};
 
 	exports.default = ProjectSection;
 

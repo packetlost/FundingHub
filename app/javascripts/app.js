@@ -27,7 +27,8 @@ class App extends Component {
       fundingHub: FundingHub.deployed(),
       currentProject: null,
       currentProjectAddress: null,
-      projectList: [],
+      activeProjectList: [],
+      finishedProjectList: [],
       statusMessage: "",
       statusType: "",
       defaultAccount: web3.eth.defaultAccount,
@@ -36,7 +37,8 @@ class App extends Component {
       contractBalance: web3.fromWei(web3.eth.getBalance(FundingHub.deployed().address), "ether").toFixed(5),
       isAdmin: false
     };
-    this.setProjectList();
+    this.setActiveProjectList();
+    this.setFinishedProjectList();
   }
 
   render = () => {
@@ -46,11 +48,15 @@ class App extends Component {
       mainContent = (
         <div id="content">
           <h1>FundingHub <span className="subheading">Decentralized Crowdfunding</span></h1>
-          <ProjectList projectList={this.state.projectList} Project={Project} setProject={this.setProject} />
-          <RegisterProject fundingHub={this.state.fundingHub} setStatus={this.setStatus} />
+          <RegisterProject fundingHub={this.state.fundingHub} setStatus={this.setStatus} setActiveProjectList={this.setActiveProjectList}/>
+          <br className="clearfix" />
+          <h2>Active Projects</h2>
+          <ProjectList projectList={this.state.activeProjectList} Project={Project} setProject={this.setProject} />
+          <h2>Finished Projects</h2>
+          <ProjectList projectList={this.state.finishedProjectList} Project={Project} setProject={this.setProject} />
         </div>);
     } else {
-      mainContent = <ProjectSection fundingHub={this.state.fundingHub} project={this.state.currentProject} />;
+      mainContent = <ProjectSection fundingHub={this.state.fundingHub} project={this.state.currentProject} setStatus={this.setStatus} />;
     }
 
     return (
@@ -65,17 +71,38 @@ class App extends Component {
     );
   }
 
-  setProjectList = () => {
+  setActiveProjectList = () => {
     var _this = this;
     var _deployed = FundingHub.deployed();
-    _deployed.getProjectCount.call().then(function(result) {
+    _deployed.getActiveProjectCount.call().then(function(result) {
+      console.log(parseInt(result));
       var _projectList = [];
       for(var i = 0; i < parseInt(result); i++) {
         _projectList.push(_deployed.activeProjects.call(i));
       }
       return Promise.all(_projectList).then(function(projectArray) {
         console.log(projectArray);
-        _this.setState({projectList: projectArray});
+        _this.setState({activeProjectList: projectArray});
+      }).catch(function(e) {
+        console.error(e);
+      });
+    }).catch(function(e) {
+      console.error(e);
+    });
+  }
+
+  setFinishedProjectList = () => {
+    var _this = this;
+    var _deployed = FundingHub.deployed();
+    _deployed.getFinishedProjectCount.call().then(function(result) {
+      console.log(parseInt(result));
+      var _projectList = [];
+      for(var i = 0; i < parseInt(result); i++) {
+        _projectList.push(_deployed.finishedProjects.call(i));
+      }
+      return Promise.all(_projectList).then(function(projectArray) {
+        console.log(projectArray);
+        _this.setState({finishedProjectList: projectArray});
       }).catch(function(e) {
         console.error(e);
       });

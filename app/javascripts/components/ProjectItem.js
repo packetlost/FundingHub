@@ -12,6 +12,9 @@ class ProjectItem extends Component {
     }).catch(function(e) {
       console.error(e);
     });
+    props.project.active.call().then(function(result) {
+      console.log(result);
+    });
   }
 
   render = () => (

@@ -12,14 +12,25 @@ contract Project {
     string title; // Title of the crowd-funding project
   }
 
-  address public fundingHub;
+  address public hub;
   Campaign public campaign;
-  mapping (address => uint) contributions; // A map of address and their corresponding contribution amount
-  address[] contributors;
-  bool public isActive;
+  mapping (address => uint) public contributions; // A map of address and their corresponding contribution amount
+  bool public active;
+  bool public refundable;
+  bool public successful;
 
-  modifier isOpen() {
-    if(!isActive) throw;
+  modifier isActive() {
+    if(!active) throw;
+    _
+  }
+
+  modifier isRefundable() {
+    if(!refundable) throw;
+    _
+  }
+
+  modifier isSuccessful() {
+    if(!successful) throw;
     _
   }
 
@@ -29,28 +40,44 @@ contract Project {
   }
 
   modifier isFunded() {
-    if(this.balance != campaign.targetAmount) throw;
+    if(this.balance < campaign.targetAmount) throw;
     _
   }
 
-  modifier hasValue() {
+  modifier isValueSent() {
     if(msg.value <= 0) throw;
     _
   }
 
+  modifier hasBalance() {
+    if(contributions[tx.origin] < 1) throw;
+    _
+  }
+
   modifier isHub() {
-    if(msg.sender != fundingHub) throw;
+    if(msg.sender != hub) throw;
+    _
+  }
+
+  modifier isOwner() {
+    if(msg.sender != campaign.owner) throw;
     _
   }
 
   function Project(uint _amount, uint _deadline, string _title) {
-    isActive = true;
+    active = true;
+    refundable = false;
+    successful = false;
     campaign = Campaign(tx.origin, _amount, _deadline, _title);
-    fundingHub = msg.sender;
+    hub = msg.sender;
   }
 
   function () {
     throw;
+  }
+
+  function checkFinished() constant returns (bool isFinished){
+    return(!active);
   }
 
   /**
@@ -61,64 +88,52 @@ contract Project {
    * the function must call payout. If the deadline has passed without the funding goal being reached, the
    * function must call refund.
    */
-  function fund(address _funder) isHub hasValue isOpen returns (bool success) {
-    uint newBalance = this.balance + msg.value;
+  function fund() isHub isValueSent isActive returns (bool isFunded) {
     // If before deadline and below targetAmount, proceed normally
-    if(campaign.deadline > block.timestamp && newBalance < campaign.targetAmount) {
-      if(addContribution(_funder, msg.value) != true) throw;
+    if(campaign.deadline > block.timestamp && this.balance < campaign.targetAmount) {
+      contributions[tx.origin] = msg.value;
       return true;
     }
-    // If the deadline is over, refund the current amount, then check status for payout/refund
-    else if(campaign.deadline < block.timestamp) {
-      if(!_funder.send(msg.value)) throw;
-      // If the targetAmount has been reached, payout the owner
-      if(this.balance >= campaign.targetAmount) {
-        if(payout() != true) throw;
-      }
-      // Otherwise refund
-      else if(refunder() != true) throw;
-      return false;
-    }
-    // If deadline isn't over but the targetAmount is breached
-    else if(campaign.deadline >= block.timestamp && newBalance >= campaign.targetAmount) {
-      uint refund = newBalance - campaign.targetAmount;
-      if(refund > 0) {
-        if(!_funder.send(refund)) throw;
-      }
-      if(addContribution(_funder, msg.value - refund) != true) throw;
-      else if(payout() != true) throw;
-      return true;
-    }
+    // If deadline isn't over or target hasn't been reached
     else {
-      // Should never happen
-      throw;
+      active = false;
+      FundingHubInterface(hub).deactiveProject();
+      // Deadline hasn't been reached but target is
+      if(campaign.deadline > block.timestamp && this.balance >= campaign.targetAmount) {
+        successful = true;
+        uint refund = this.balance - campaign.targetAmount;
+        contributions[tx.origin] += (msg.value - refund);
+        if(refund > 0) {
+          if(!tx.origin.send(refund)) throw;
+        }
+        return true;
+      }
+      // If the deadline is over, refund the current amount, then check status for payout/refund
+      else {
+        refundable = true;
+        if(!tx.origin.send(msg.value)) throw;
+        return true;
+      }
     }
-  }
-
-  function addContribution(address _contributor, uint _value) private returns(bool success) {
-    uint contributed = contributions[_contributor];
-    contributions[_contributor] = contributed + _value;
-    if(contributed == 0) contributors.push(_contributor);
-    return true;
   }
 
   /**
    * This is the function that sends all funds received in the contract to the owner of the project.
    */
-  function payout() private isFunded returns (bool success) {
-    isActive = false;
-    if(!campaign.owner.send(this.balance)) throw;
-  }
-
-  /**
-   * This function sends all individual contributions back to the respective contributor.
-   */
-  function refunder() private isExpired returns (bool success) {
-    isActive = false;
-    for(uint i = 0; i < contributors.length; i++) {
-      if(!contributors[i].send(contributions[contributors[i]])) throw;
-    }
+  function payout() public isOwner isFunded isSuccessful returns (bool success) {
+    if(!campaign.owner.send(campaign.targetAmount)) throw;
     return true;
   }
 
+  /**
+   * This function sends individual contributions back to the respective contributor.
+   */
+  function refund() public isExpired hasBalance isRefundable returns (bool success) {
+    uint refundAmount = contributions[tx.origin];
+    contributions[tx.origin] = 0;
+    if(!tx.origin.send(refundAmount)) throw;
+    return true;
+  }
 }
+
+contract FundingHubInterface {function deactiveProject();}
