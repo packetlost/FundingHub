@@ -44,7 +44,7 @@ contract FundingHub {
    */
   function contribute(address _project) {
     Project theProject = Project(_project);
-    theProject.fund.value(msg.value)();
+    if(!theProject.fund.value(msg.value)()) throw;
   }
 
   /**

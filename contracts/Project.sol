@@ -114,6 +114,7 @@ contract Project {
         if(!tx.origin.send(msg.value)) throw;
         return true;
       }
+      return true;
     }
   }
 
