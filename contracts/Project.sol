@@ -88,7 +88,7 @@ contract Project {
    * the function must call payout. If the deadline has passed without the funding goal being reached, the
    * function must call refund.
    */
-  function fund() isHub isValueSent isActive returns (bool isFunded) {
+  function fund() isHub isValueSent isActive returns (bool success) {
     // If before deadline and below targetAmount, proceed normally
     if(campaign.deadline > block.timestamp && this.balance < campaign.targetAmount) {
       contributions[tx.origin] = msg.value;
